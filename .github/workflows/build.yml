@@ -2,8 +2,6 @@ name: Build and Deploy Worker
 
 on:
   push:
-    branches:
-      - main
   schedule:
     - cron: '*/1 * * * *'
 
