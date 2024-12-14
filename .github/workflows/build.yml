@@ -3,7 +3,7 @@ name: Build and Deploy Worker
 on:
   push:
     branches:
-      - main
+      - dev
   schedule:
     - cron: '1 0,4,8,12,16,20 * * *'
 
@@ -17,11 +17,8 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
-
-      - name: Check out the code
-        uses: actions/checkout@v4
         with:
-          ref: dev
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
