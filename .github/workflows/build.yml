@@ -18,6 +18,11 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v4
 
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          path: main
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -38,8 +43,9 @@ jobs:
           git add _worker.js
           git commit -m "Automated build: update _worker.js"
           git push
-          git checkout -b main origin/main
-          git checkout dev
           git checkout main _worker.js
+          git checkout main
+          git commit -m "Automated build: update _worker.js"
+          git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
