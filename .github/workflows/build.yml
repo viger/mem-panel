@@ -42,9 +42,9 @@ jobs:
           git push
           git checkout -b main origin/main
           git checkout dev
-          git checkout main _worker.js
+          git checkout -p main _worker.js
           git checkout main
           git commit -m "Automated build: update _worker.js"
-          git push
+          git push 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
