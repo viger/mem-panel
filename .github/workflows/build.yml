@@ -38,6 +38,8 @@ jobs:
           git add _worker.js
           git commit -m "Automated build: update _worker.js"
           git push
-          git checkout origin/main _worker.js
+          git checkout -b main origin/main
+          git checkout dev
+          git checkout main _worker.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
