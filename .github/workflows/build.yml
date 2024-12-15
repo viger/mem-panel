@@ -3,9 +3,9 @@ name: Build and Deploy Worker
 on:
   push:
     branches:
-      - main
-#  schedule:
-#    - cron: '1 0,4,8,12,16,20 * * *'
+      - dev
+  schedule:
+    - cron: '1 0,6,12 * * *'
 
 permissions:
   contents: write
@@ -17,11 +17,8 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
-
-      - name: Check out the code
-        uses: actions/checkout@v4
         with:
-          ref: dev
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,18 +31,21 @@ jobs:
       - name: Build project
         run: |
           npx wrangler deploy src/worker.js --name blog-worker-panel --compatibility-flag [nodejs_compat] --compatibility-date 2024-10-26 --dry-run --outdir=dist
-          npx javascript-obfuscator dist/worker.js --output _worker.js
+          npx javascript-obfuscator --split-strings true --split-strings-chunk-length 2 dist/worker.js --output _worker.js
 
       - name: Commit and push built worker
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull
           git add _worker.js
-          git commit -m "Automated build: update _worker.js"
+          git commit -m "Automated build: update _worker.js to dev"
           git push
-          git checkout main _worker.js
+          git checkout -b main origin/main
           git checkout main
-          git commit -m "Automated build: update _worker.js"
-          git push
+          git checkout dev _worker.js
+          git checkout main
+          git commit -m "Automated build: update _worker.js to main"
+          git push 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
