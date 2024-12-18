@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Rename Workerjs
+        run: |
+          mv _worker.js worker.js
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
