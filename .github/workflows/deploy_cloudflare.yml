@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          run_install: true
+          version: 9
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
