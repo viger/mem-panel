@@ -236,7 +236,7 @@ function buildXrayRoutingRules (blogSettings, outboundAddrs, isChain, isBalancer
 
     if (isChain) {
         const rule = {
-            [isBalancer ? "balancerTag" : "outboundTag"]: isBalancer ? "all-proxy" : "proxy",
+            [isBalancer ? "balancerTag" : "outboundTag"]: isBalancer ? "all-dl" : "dl",
             type: "field"
         };
     
@@ -266,7 +266,7 @@ function buildXrayRoutingRules (blogSettings, outboundAddrs, isChain, isBalancer
     } else  {
         rules.push({
             network: "tcp,udp",
-            outboundTag: isChain ? "chain" : isWorkerLess ? "fragment" : "proxy",
+            outboundTag: isChain ? "chain" : isWorkerLess ? "fragment" : "dl",
             type: "field"
         });
     }
@@ -274,7 +274,7 @@ function buildXrayRoutingRules (blogSettings, outboundAddrs, isChain, isBalancer
     return rules;
 }
 
-function buildXrayVLESSOutbound (tag, address, port, host, sni, proxyIP, isFragment, allowInsecure, enableIPv6) {
+function buildXrayVLESSOutbound (tag, address, port, host, sni, dlIP, isFragment, allowInsecure, enableIPv6) {
     const outbound = {
         protocol: "vless",
         settings: {
@@ -301,7 +301,7 @@ function buildXrayVLESSOutbound (tag, address, port, host, sni, proxyIP, isFragm
                     Host: host,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
                 },
-                path: `/${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}?ed=2560`
+                path: `/${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}?ed=2560`
             }
         },
         tag: tag
@@ -319,7 +319,7 @@ function buildXrayVLESSOutbound (tag, address, port, host, sni, proxyIP, isFragm
 
     const sockopt = outbound.streamSettings.sockopt;
     if (isFragment) {
-        sockopt.dialerProxy = "fragment";
+        sockopt.dialerdl = "fragment";
     } else {
         sockopt.tcpKeepAliveIdle = 30;
         sockopt.tcpNoDelay = true;
@@ -329,7 +329,7 @@ function buildXrayVLESSOutbound (tag, address, port, host, sni, proxyIP, isFragm
     return outbound;
 }
 
-function buildXrayTrojanOutbound (tag, address, port, host, sni, proxyIP, isFragment, allowInsecure, enableIPv6) {
+function buildXrayTrojanOutbound (tag, address, port, host, sni, dlIP, isFragment, allowInsecure, enableIPv6) {
     const outbound = {
         protocol: "trojan",
         settings: {
@@ -350,7 +350,7 @@ function buildXrayTrojanOutbound (tag, address, port, host, sni, proxyIP, isFrag
                 headers: {
                     Host: host
                 },
-                path: `/tr${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}?ed=2560`
+                path: `/tr${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}?ed=2560`
             }
         },
         tag: tag
@@ -368,7 +368,7 @@ function buildXrayTrojanOutbound (tag, address, port, host, sni, proxyIP, isFrag
 
     const sockopt = outbound.streamSettings.sockopt;
     if (isFragment) {
-        sockopt.dialerProxy = "fragment";
+        sockopt.dialerdl = "fragment";
     } else {
         sockopt.tcpKeepAliveIdle = 30;
         sockopt.tcpNoDelay = true;
@@ -417,11 +417,11 @@ function buildXrayWarpOutbound (blogSettings, webConfigs, endpoint, isChain, cli
         },
         streamSettings: {
             sockopt: {
-                dialerProxy: "proxy",
+                dialerdl: "dl",
                 domainStrategy: warpEnableIPv6 ? "UseIPv4v6" : "UseIPv4",
             }
         },
-        tag: isChain ? "chain" : "proxy"
+        tag: isChain ? "chain" : "dl"
     };
 
     !isChain && delete outbound.streamSettings;
@@ -435,9 +435,9 @@ function buildXrayWarpOutbound (blogSettings, webConfigs, endpoint, isChain, cli
     return outbound;
 }
 
-function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
-    if (['socks', 'http'].includes(chainProxyParams.protocol)) {
-        const { protocol, server, port, user, pass } = chainProxyParams;
+function buildXrayChainOutbound(chaindlParams, enableIPv6) {
+    if (['socks', 'http'].includes(chaindlParams.protocol)) {
+        const { protocol, server, port, user, pass } = chaindlParams;
         return {
             protocol: protocol,
             settings: {
@@ -458,7 +458,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
             streamSettings: {
                 network: "tcp",
                 sockopt: {
-                    dialerProxy: "proxy",
+                    dialerdl: "dl",
                     domainStrategy: enableIPv6 ? "UseIPv4v6" : "UseIPv4",
                     tcpNoDelay: true
                 }
@@ -467,7 +467,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
                 enabled: true,
                 concurrency: 8,
                 xudpConcurrency: 16,
-                xudpProxyUDP443: "reject"
+                xudpdlUDP443: "reject"
             },
             tag: "chain"
         };
@@ -476,7 +476,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
     const { 
         server, 
         port, 
-        uuid, 
+        uid, 
         flow, 
         security, 
         type, 
@@ -492,14 +492,14 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
         authority, 
         serviceName, 
         mode 
-    } = chainProxyParams;
+    } = chaindlParams;
 
-    const proxyOutbound = {
+    const dlOutbound = {
         mux: {
             concurrency: 8,
             enabled: true,
             xudpConcurrency: 16,
-            xudpProxyUDP443: "reject"
+            xudpdlUDP443: "reject"
         },
         protocol: "vless",
         settings: {
@@ -511,7 +511,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
                         {
                             encryption: "none",
                             flow: flow,
-                            id: uuid,
+                            id: uid,
                             level: 8,
                             security: "auto"
                         }
@@ -523,7 +523,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
             network: type,
             security: security,
             sockopt: {
-                dialerProxy: "proxy",
+                dialerdl: "dl",
                 domainStrategy: enableIPv6 ? "UseIPv4v6" : "UseIPv4",
                 tcpNoDelay: true
             }
@@ -533,7 +533,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
     
     if (security === 'tls') {
         const tlsAlpns = alpn ? alpn?.split(',') : [];
-        proxyOutbound.streamSettings.tlsSettings = {
+        dlOutbound.streamSettings.tlsSettings = {
             allowInsecure: false,
             fingerprint: fp,
             alpn: tlsAlpns,
@@ -542,8 +542,8 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
     }
 
     if (security === 'reality') { 
-        delete proxyOutbound.mux;
-        proxyOutbound.streamSettings.realitySettings = {
+        delete dlOutbound.mux;
+        dlOutbound.streamSettings.realitySettings = {
             fingerprint: fp,
             publicKey: pbk,
             serverName: sni,
@@ -555,7 +555,7 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
     if (headerType === 'http') {
         const httpPaths = path?.split(',');
         const httpHosts = host?.split(',');
-        proxyOutbound.streamSettings.tcpSettings = {
+        dlOutbound.streamSettings.tcpSettings = {
             header: {
                 request: {
                     headers: { Host: httpHosts },
@@ -574,27 +574,27 @@ function buildXrayChainOutbound(chainProxyParams, enableIPv6) {
         };
     }
 
-    if (type === 'tcp' && security !== 'reality' && !headerType) proxyOutbound.streamSettings.tcpSettings = {
+    if (type === 'tcp' && security !== 'reality' && !headerType) dlOutbound.streamSettings.tcpSettings = {
         header: {
             type: "none"
         }
     };
     
-    if (type === 'ws') proxyOutbound.streamSettings.wsSettings = {
+    if (type === 'ws') dlOutbound.streamSettings.wsSettings = {
         headers: { Host: host },
         path: path
     };
     
     if (type === 'grpc') {
-        delete proxyOutbound.mux;
-        proxyOutbound.streamSettings.grpcSettings = {
+        delete dlOutbound.mux;
+        dlOutbound.streamSettings.grpcSettings = {
             authority: authority,
             multiMode: mode === 'multi',
             serviceName: serviceName
         };
     }
     
-    return proxyOutbound;
+    return dlOutbound;
 }
 
 function buildXrayConfig (blogSettings, remark, isFragment, isBalancer, isChain, balancerFallback, isWarp) {
@@ -638,7 +638,7 @@ function buildXrayConfig (blogSettings, remark, isFragment, isBalancer, isChain,
             const chainBalancer = structuredClone(config.routing.balancers[0]);
             if (balancerFallback) chainBalancer.fallbackTag = "chain-2";
             config.routing.balancers.push({...chainBalancer, selector: ["chain"]});
-            config.routing.balancers[0].tag = "all-proxy";
+            config.routing.balancers[0].tag = "all-dl";
         }
     } else {
         delete config.observatory;
@@ -648,43 +648,43 @@ function buildXrayConfig (blogSettings, remark, isFragment, isBalancer, isChain,
     return config;
 }
 
-async function buildXrayBestPingConfig(blogSettings, totalAddresses, chainProxy, outbounds, isFragment) {
+async function buildXrayBestPingConfig(blogSettings, totalAddresses, chaindl, outbounds, isFragment) {
     const remark = isFragment ? '💦 BLOG F - Best Ping 💥' : '💦 BLOG - Best Ping 💥';
-    const config = buildXrayConfig(blogSettings, remark, isFragment, true, chainProxy, true);
+    const config = buildXrayConfig(blogSettings, remark, isFragment, true, chaindl, true);
     config.dns = await buildXrayDNS(blogSettings, totalAddresses, undefined, false, false);
-    config.routing.rules = buildXrayRoutingRules(blogSettings, totalAddresses, chainProxy, true, false, false);
+    config.routing.rules = buildXrayRoutingRules(blogSettings, totalAddresses, chaindl, true, false, false);
     config.outbounds.unshift(...outbounds);
 
     return config;
 }
 
-async function buildXrayBestFragmentConfig(blogSettings, hostName, chainProxy, outbounds) {
+async function buildXrayBestFragmentConfig(blogSettings, hostName, chaindl, outbounds) {
     const bestFragValues = ['10-20', '20-30', '30-40', '40-50', '50-60', '60-70', 
                             '70-80', '80-90', '90-100', '10-30', '20-40', '30-50', 
                             '40-60', '50-70', '60-80', '70-90', '80-100', '100-200'];
 
-    const config = buildXrayConfig(blogSettings, '💦 BLOG F - Best Fragment 😎', true, true, chainProxy, false, false);
+    const config = buildXrayConfig(blogSettings, '💦 BLOG F - Best Fragment 😎', true, true, chaindl, false, false);
     config.dns = await buildXrayDNS(blogSettings, [], hostName, false, false);
-    config.routing.rules = buildXrayRoutingRules(blogSettings, [], chainProxy, true, false, false);
+    config.routing.rules = buildXrayRoutingRules(blogSettings, [], chaindl, true, false, false);
     const fragment = config.outbounds.shift();
     const bestFragOutbounds = [];
     
     bestFragValues.forEach( (fragLength, index) => { 
-        if (chainProxy) {
-            const chainOutbound = structuredClone(chainProxy);
+        if (chaindl) {
+            const chainOutbound = structuredClone(chaindl);
             chainOutbound.tag = `chain-${index + 1}`;
-            chainOutbound.streamSettings.sockopt.dialerProxy = `prox-${index + 1}`;
+            chainOutbound.streamSettings.sockopt.dialerdl = `prox-${index + 1}`;
             bestFragOutbounds.push(chainOutbound);
         }
         
-        const proxyOutbound = structuredClone(outbounds[chainProxy ? 1 : 0]);
-        proxyOutbound.tag = `prox-${index + 1}`;
-        proxyOutbound.streamSettings.sockopt.dialerProxy = `frag-${index + 1}`;
+        const dlOutbound = structuredClone(outbounds[chaindl ? 1 : 0]);
+        dlOutbound.tag = `prox-${index + 1}`;
+        dlOutbound.streamSettings.sockopt.dialerdl = `frag-${index + 1}`;
         const fragmentOutbound = structuredClone(fragment);
         fragmentOutbound.tag = `frag-${index + 1}`;
         fragmentOutbound.settings.fragment.length = fragLength;
         fragmentOutbound.settings.fragment.interval = '1-1';
-        bestFragOutbounds.push(proxyOutbound, fragmentOutbound);
+        bestFragOutbounds.push(dlOutbound, fragmentOutbound);
     });
     
     config.outbounds.unshift(...bestFragOutbounds);
@@ -707,11 +707,11 @@ export async function getXrayCustomConfigs(request, env, isFragment) {
     let configs = [];
     let outbounds = [];
     let protocols = [];
-    let chainProxy;
+    let chaindl;
     const {
-        proxyIP,
-        outProxy,
-        outProxyParams,
+        dlIP,
+        outdl,
+        outdlParams,
         cleanIPs,
         enableIPv6,
         customCdnAddrs,
@@ -722,17 +722,17 @@ export async function getXrayCustomConfigs(request, env, isFragment) {
         ports
     } = blogSettings;
 
-    if (outProxy) {
-        const proxyParams = JSON.parse(outProxyParams);
+    if (outdl) {
+        const dlParams = JSON.parse(outdlParams);
         try {
-            chainProxy = buildXrayChainOutbound(proxyParams, enableIPv6);
+            chaindl = buildXrayChainOutbound(dlParams, enableIPv6);
         } catch (error) {
-            console.log('An error occured while parsing chain proxy: ', error);
-            chainProxy = undefined;
+            console.log('An error occured while parsing chain dl: ', error);
+            chaindl = undefined;
             await env.blog.put("blogSettings", JSON.stringify({
                 ...blogSettings, 
-                outProxy: '',
-                outProxyParams: {}
+                outdl: '',
+                outdlParams: {}
             }));
         }
     }
@@ -743,7 +743,7 @@ export async function getXrayCustomConfigs(request, env, isFragment) {
     const totalPorts = ports.filter(port => isFragment ? globalThis.defaultHttpsPorts.includes(port): true);
     vlessConfigs && protocols.push('VLESS');
     trojanConfigs && protocols.push('Trojan');
-    let proxyIndex = 1;
+    let dlIndex = 1;
     
     for (const protocol of protocols) {
         let protocolIndex = 1;
@@ -754,36 +754,36 @@ export async function getXrayCustomConfigs(request, env, isFragment) {
                 const sni = isCustomAddr ? customCdnSni : randomUpperCase(globalThis.hostName);
                 const host = isCustomAddr ? customCdnHost : globalThis.hostName;
                 const remark = generateRemark(protocolIndex, port, addr, cleanIPs, protocol, configType);
-                const customConfig = buildXrayConfig(blogSettings, remark, isFragment, false, chainProxy, false, false);
+                const customConfig = buildXrayConfig(blogSettings, remark, isFragment, false, chaindl, false, false);
                 customConfig.dns = await buildXrayDNS(blogSettings, [addr], undefined);
-                customConfig.routing.rules = buildXrayRoutingRules(blogSettings, [addr], chainProxy, false, false, false);
+                customConfig.routing.rules = buildXrayRoutingRules(blogSettings, [addr], chaindl, false, false, false);
                 const outbound = protocol === 'VLESS'
-                    ? buildXrayVLESSOutbound('proxy', addr, port, host, sni, proxyIP, isFragment, isCustomAddr, enableIPv6)
-                    : buildXrayTrojanOutbound('proxy', addr, port, host, sni, proxyIP, isFragment, isCustomAddr, enableIPv6);
+                    ? buildXrayVLESSOutbound('dl', addr, port, host, sni, dlIP, isFragment, isCustomAddr, enableIPv6)
+                    : buildXrayTrojanOutbound('dl', addr, port, host, sni, dlIP, isFragment, isCustomAddr, enableIPv6);
 
                 customConfig.outbounds.unshift({...outbound});
-                outbound.tag = `prox-${proxyIndex}`;
+                outbound.tag = `prox-${dlIndex}`;
 
-                if (chainProxy) {
-                    customConfig.outbounds.unshift(chainProxy);
-                    const chainOutbound = structuredClone(chainProxy);
-                    chainOutbound.tag = `chain-${proxyIndex}`;
-                    chainOutbound.streamSettings.sockopt.dialerProxy = `prox-${proxyIndex}`;
+                if (chaindl) {
+                    customConfig.outbounds.unshift(chaindl);
+                    const chainOutbound = structuredClone(chaindl);
+                    chainOutbound.tag = `chain-${dlIndex}`;
+                    chainOutbound.streamSettings.sockopt.dialerdl = `prox-${dlIndex}`;
                     outbounds.push(chainOutbound);
                 }
                 
                 outbounds.push(outbound);
                 configs.push(customConfig);
-                proxyIndex++;
+                dlIndex++;
                 protocolIndex++;
             }
         }
     }
     
-    const bestPing = await buildXrayBestPingConfig(blogSettings, totalAddresses, chainProxy, outbounds, isFragment);
+    const bestPing = await buildXrayBestPingConfig(blogSettings, totalAddresses, chaindl, outbounds, isFragment);
     const finalConfigs = [...configs, bestPing];
     if (isFragment) {
-        const bestFragment = await buildXrayBestFragmentConfig(blogSettings, globalThis.hostName, chainProxy, outbounds);
+        const bestFragment = await buildXrayBestFragmentConfig(blogSettings, globalThis.hostName, chaindl, outbounds);
         const workerLessConfig = await buildXrayWorkerLessConfig(blogSettings); 
         finalConfigs.push(bestFragment, workerLessConfig);
     }
@@ -791,7 +791,7 @@ export async function getXrayCustomConfigs(request, env, isFragment) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });
@@ -820,12 +820,12 @@ export async function getXrayWarpConfigs (request, env, client) {
         WoWConfig.outbounds.unshift(WoWOutbound, warpOutbound);
         xrayWarpConfigs.push(warpConfig);
         xrayWoWConfigs.push(WoWConfig);
-        const proxyOutbound = structuredClone(warpOutbound);
-        proxyOutbound.tag = `prox-${index + 1}`;
+        const dlOutbound = structuredClone(warpOutbound);
+        dlOutbound.tag = `prox-${index + 1}`;
         const chainOutbound = structuredClone(WoWOutbound);
         chainOutbound.tag = `chain-${index + 1}`;
-        chainOutbound.streamSettings.sockopt.dialerProxy = `prox-${index + 1}`;
-        xrayWarpOutbounds.push(proxyOutbound);
+        chainOutbound.streamSettings.sockopt.dialerdl = `prox-${index + 1}`;
+        xrayWarpOutbounds.push(dlOutbound);
         xrayWoWOutbounds.push(chainOutbound);
     }
 
@@ -843,7 +843,7 @@ export async function getXrayWarpConfigs (request, env, client) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });

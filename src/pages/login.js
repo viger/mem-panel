@@ -154,7 +154,7 @@ export async function renderLoginPage () {
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'DENY',
             'Referrer-Policy': 'strict-origin-when-cross-origin',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, no-transform',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate, no-transform',
             'CDN-Cache-Control': 'no-store'
         }
     });

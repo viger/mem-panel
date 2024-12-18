@@ -1,5 +1,5 @@
 import { connect } from 'cloudflare:sockets';
-import { isValidUUID } from '../helpers/helpers';
+import { isValiduid } from '../helpers/helpers';
 
 /**
  * Handles VLESS over WebSocket requests by creating a WebSocket pair, accepting the WebSocket connection, and processing the VLESS header.
@@ -67,8 +67,8 @@ export async function vlessOverWSHandler(request) {
                     if (portRemote === 53) {
                         isDns = true;
                     } else {
-                        // controller.error('UDP proxy only enable for DNS which is port 53');
-                        throw new Error("UDP proxy only enable for DNS which is port 53"); // cf seems has bug, controller.error will not end stream
+                        // controller.error('UDP dl only enable for DNS which is port 53');
+                        throw new Error("UDP dl only enable for DNS which is port 53"); // cf seems has bug, controller.error will not end stream
                         return;
                     }
                 }
@@ -114,11 +114,11 @@ export async function vlessOverWSHandler(request) {
 }
 
 /**
- * Checks if a given UUID is present in the API response.
- * @param {string} targetUuid The UUID to search for.
- * @returns {Promise<boolean>} A Promise that resolves to true if the UUID is present in the API response, false otherwise.
+ * Checks if a given uid is present in the API response.
+ * @param {string} targetuid The uid to search for.
+ * @returns {Promise<boolean>} A Promise that resolves to true if the uid is present in the API response, false otherwise.
  */
-async function checkUuidInApiResponse(targetUuid) {
+async function checkuidInApiResponse(targetuid) {
     // Check if any of the environment variables are empty
   
     try {
@@ -126,8 +126,8 @@ async function checkUuidInApiResponse(targetUuid) {
         if (!apiResponse) {
             return false;
         }
-        const isUuidInResponse = apiResponse.users.some((user) => user.uuid === targetUuid);
-        return isUuidInResponse;
+        const isuidInResponse = apiResponse.users.some((user) => user.uid === targetuid);
+        return isuidInResponse;
     } catch (error) {
         console.error("Error:", error);
         return false;
@@ -172,10 +172,10 @@ async function handleTCPOutBound(
   
     // if the cf connect tcp socket have no incoming data, we retry to redirect ip
     async function retry() {
-        const panelProxyIP = globalThis.pathName.split('/')[2];
-        const panelProxyIPs = panelProxyIP ? atob(panelProxyIP).split(',') : undefined;
-        const finalProxyIP = panelProxyIPs ? panelProxyIPs[Math.floor(Math.random() * panelProxyIPs.length)] : globalThis.proxyIP || addressRemote;
-		const tcpSocket = await connectAndWrite(finalProxyIP, portRemote);
+        const paneldlIP = globalThis.pathName.split('/')[2];
+        const paneldlIPs = paneldlIP ? atob(paneldlIP).split(',') : undefined;
+        const finaldlIP = paneldlIPs ? paneldlIPs[Math.floor(Math.random() * paneldlIPs.length)] : globalThis.dlIP || addressRemote;
+		const tcpSocket = await connectAndWrite(finaldlIP, portRemote);
         // no matter retry success or not, close websocket
         tcpSocket.closed
             .catch((error) => {
@@ -264,7 +264,7 @@ function makeReadableWebSocketStream(webSocketServer, earlyDataHeader, log) {
 /**
  * Processes the VLESS header buffer and returns an object with the relevant information.
  * @param {ArrayBuffer} vlessBuffer The VLESS header buffer to process.
- * @param {string} userID The user ID to validate against the UUID in the VLESS header.
+ * @param {string} userID The user ID to validate against the uid in the VLESS header.
  * @returns {{
  *  hasError: boolean,
  *  message?: string,
@@ -289,12 +289,12 @@ async function processVlessHeader(vlessBuffer, userID) {
     const slicedBuffer = new Uint8Array(vlessBuffer.slice(1, 17));
     const slicedBufferString = stringify(slicedBuffer);
 
-    const uuids = userID.includes(",") ? userID.split(",") : [userID];
+    const uids = userID.includes(",") ? userID.split(",") : [userID];
 
-    const checkUuidInApi = await checkUuidInApiResponse(slicedBufferString);
-    isValidUser = uuids.some((userUuid) => checkUuidInApi || slicedBufferString === userUuid.trim());
+    const checkuidInApi = await checkuidInApiResponse(slicedBufferString);
+    isValidUser = uids.some((useruid) => checkuidInApi || slicedBufferString === useruid.trim());
 
-    console.log(`checkUuidInApi: ${await checkUuidInApiResponse(slicedBufferString)}, userID: ${slicedBufferString}`);
+    console.log(`checkuidInApi: ${await checkuidInApiResponse(slicedBufferString)}, userID: ${slicedBufferString}`);
 
     if (!isValidUser) {
         return {
@@ -514,11 +514,11 @@ function unsafeStringify(arr, offset = 0) {
 }
 
 function stringify(arr, offset = 0) {
-	const uuid = unsafeStringify(arr, offset);
-	if (!isValidUUID(uuid)) {
-		throw TypeError("Stringified UUID is invalid");
+	const uid = unsafeStringify(arr, offset);
+	if (!isValiduid(uid)) {
+		throw TypeError("Stringified uid is invalid");
 	}
-	return uuid;
+	return uid;
 }
 
 /**

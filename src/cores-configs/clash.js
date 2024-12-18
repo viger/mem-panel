@@ -7,7 +7,7 @@ async function buildClashDNS (blogSettings, isChain, isWarp) {
         remoteDNS, 
         localDNS, 
         vlessTrojanFakeDNS,
-        outProxyParams,
+        outdlParams,
         enableIPv6, 
         warpFakeDNS,
         warpEnableIPv6,
@@ -40,14 +40,14 @@ async function buildClashDNS (blogSettings, isChain, isWarp) {
         "use-system-hosts": false,
         "nameserver": isWarp 
             ? warpRemoteDNS.map(dns => isChain ? `${dns}#💦 Warp - Best Ping 🚀` : `${dns}#✅ Selector`) 
-            : [isChain ? `${remoteDNS}#proxy-1` : `${remoteDNS}#✅ Selector`],
-        "proxy-server-nameserver": [`${localDNS}#DIRECT`]
+            : [isChain ? `${remoteDNS}#dl-1` : `${remoteDNS}#✅ Selector`],
+        "dl-server-nameserver": [`${localDNS}#DIRECT`]
     };
 
     if (isChain && !isWarp) {
-        const chainOutboundServer = JSON.parse(outProxyParams).server;
+        const chainOutboundServer = JSON.parse(outdlParams).server;
         if (isDomain(chainOutboundServer)) dns["nameserver-policy"] = {
-            [chainOutboundServer]: isChain ? `${remoteDNS}#proxy-1` : `${remoteDNS}#✅ Selector`
+            [chainOutboundServer]: isChain ? `${remoteDNS}#dl-1` : `${remoteDNS}#✅ Selector`
         };    
     } 
 
@@ -256,7 +256,7 @@ function buildClashVLESSOutbound (remark, address, port, host, sni, path, allowI
         "type": "vless",
         "server": addr,
         "port": +port,
-        "uuid": globalThis.userID,
+        "uid": globalThis.userID,
         "tls": tls,
         "network": "ws",
         "udp": true,
@@ -328,36 +328,36 @@ function buildClashWarpOutbound (webConfigs, remark, endpoint, chain) {
         "reserved": reserved,
         "udp": true,
         "mtu": 1280,
-        "dialer-proxy": chain
+        "dialer-dl": chain
     };
 }
 
-function buildClashChainOutbound(chainProxyParams) {
-    if (["socks", "http"].includes(chainProxyParams.protocol)) {
-        const { protocol, server, port, user, pass } = chainProxyParams;
-        const proxyType = protocol === 'socks' ? 'socks5' : protocol; 
+function buildClashChainOutbound(chaindlParams) {
+    if (["socks", "http"].includes(chaindlParams.protocol)) {
+        const { protocol, server, port, user, pass } = chaindlParams;
+        const dlType = protocol === 'socks' ? 'socks5' : protocol; 
         return {
             "name": "",
-            "type": proxyType,
+            "type": dlType,
             "server": server,
             "port": +port,
-            "dialer-proxy": "",
+            "dialer-dl": "",
             "username": user,
             "password": pass
         };
     }
 
-    const { server, port, uuid, flow, security, type, sni, fp, alpn, pbk, sid, headerType, host, path, serviceName } = chainProxyParams;
+    const { server, port, uid, flow, security, type, sni, fp, alpn, pbk, sid, headerType, host, path, serviceName } = chaindlParams;
     const chainOutbound = {
         "name": "💦 Chain Best Ping 💥",
         "type": "vless",
         "server": server,
         "port": +port,
         "udp": true,
-        "uuid": uuid,
+        "uid": uid,
         "flow": flow,
         "network": type,
-        "dialer-proxy": "💦 Best Ping 💥"
+        "dialer-dl": "💦 Best Ping 💥"
     };
 
     if (security === 'tls') {
@@ -420,13 +420,13 @@ export async function getClashWarpConfig(request, env) {
     const { rules, ruleProviders } = buildClashRoutingRules(blogSettings);
     config.rules = rules;
     config['rule-providers'] = ruleProviders;
-    const selector = config['proxy-groups'][0];
-    const warpUrlTest = config['proxy-groups'][1];
+    const selector = config['dl-groups'][0];
+    const warpUrlTest = config['dl-groups'][1];
     selector.proxies = ['💦 Warp - Best Ping 🚀', '💦 WoW - Best Ping 🚀'];
     warpUrlTest.name = '💦 Warp - Best Ping 🚀';
     warpUrlTest.interval = +blogSettings.bestWarpInterval;
-    config['proxy-groups'].push(structuredClone(warpUrlTest));
-    const WoWUrlTest = config['proxy-groups'][2];
+    config['dl-groups'].push(structuredClone(warpUrlTest));
+    const WoWUrlTest = config['dl-groups'][2];
     WoWUrlTest.name = '💦 WoW - Best Ping 🚀';
     let warpRemarks = [], WoWRemarks = [];
     
@@ -447,7 +447,7 @@ export async function getClashWarpConfig(request, env) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });
@@ -455,16 +455,16 @@ export async function getClashWarpConfig(request, env) {
 
 export async function getClashNormalConfig (request, env) {
     const { blogSettings } = await getDataset(request, env);
-    let chainProxy;
+    let chaindl;
     const { 
         resolvedRemoteDNS,
         cleanIPs, 
-        proxyIP, 
+        dlIP, 
         ports, 
         vlessConfigs, 
         trojanConfigs, 
-        outProxy, 
-        outProxyParams,
+        outdl, 
+        outdlParams,
         customCdnAddrs,
         customCdnHost,
         customCdnSni,
@@ -472,17 +472,17 @@ export async function getClashNormalConfig (request, env) {
         enableIPv6
     } = blogSettings; 
 
-    if (outProxy) {
-        const proxyParams = JSON.parse(outProxyParams);        
+    if (outdl) {
+        const dlParams = JSON.parse(outdlParams);        
         try {
-            chainProxy = buildClashChainOutbound(proxyParams);
+            chaindl = buildClashChainOutbound(dlParams);
         } catch (error) {
-            console.log('An error occured while parsing chain proxy: ', error);
-            chainProxy = undefined;
+            console.log('An error occured while parsing chain dl: ', error);
+            chaindl = undefined;
             await env.blog.put("blogSettings", JSON.stringify({
                 ...blogSettings, 
-                outProxy: '',
-                outProxyParams: {}
+                outdl: '',
+                outdlParams: {}
             }));
         }
     }
@@ -496,18 +496,18 @@ export async function getClashNormalConfig (request, env) {
         delete config.hosts;
     }
     const { rules, ruleProviders } = buildClashRoutingRules(blogSettings);
-    config.dns = await buildClashDNS(blogSettings, chainProxy, false);
+    config.dns = await buildClashDNS(blogSettings, chaindl, false);
     config.rules = rules;
     config['rule-providers'] = ruleProviders;
-    const selector = config['proxy-groups'][0];
-    const urlTest = config['proxy-groups'][1];
+    const selector = config['dl-groups'][0];
+    const urlTest = config['dl-groups'][1];
     selector.proxies = ['💦 Best Ping 💥'];
     urlTest.name = '💦 Best Ping 💥';
     urlTest.interval = +bestVLESSTrojanInterval;
     const Addresses = await getConfigAddresses(cleanIPs, enableIPv6);
     const customCdnAddresses = customCdnAddrs ? customCdnAddrs.split(',') : [];
     const totalAddresses = [...Addresses, ...customCdnAddresses];
-    let proxyIndex = 1, path;
+    let dlIndex = 1, path;
     const protocols = [
         ...(vlessConfigs ? ['VLESS'] : []),
         ...(trojanConfigs ? ['Trojan'] : [])
@@ -525,9 +525,9 @@ export async function getClashNormalConfig (request, env) {
                 const remark = generateRemark(protocolIndex, port, addr, cleanIPs, protocol, configType).replace(' : ', ' - ');
 
                 if (protocol === 'VLESS') {
-                    path = `/${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}`;
+                    path = `/${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}`;
                     VLESSOutbound = buildClashVLESSOutbound(
-                        chainProxy ? `proxy-${proxyIndex}` : remark, 
+                        chaindl ? `dl-${dlIndex}` : remark, 
                         addr, 
                         port,  
                         host,
@@ -541,9 +541,9 @@ export async function getClashNormalConfig (request, env) {
                 }
                 
                 if (protocol === 'Trojan' && globalThis.defaultHttpsPorts.includes(port)) {
-                    path = `/tr${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}`;
+                    path = `/tr${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}`;
                     TrojanOutbound = buildClashTrojanOutbound(
-                        chainProxy ? `proxy-${proxyIndex}` : remark, 
+                        chaindl ? `dl-${dlIndex}` : remark, 
                         addr, 
                         port,  
                         host,
@@ -556,14 +556,14 @@ export async function getClashNormalConfig (request, env) {
                     urlTest.proxies.push(remark);
                 }
 
-                if (chainProxy) {
-                    let chain = structuredClone(chainProxy);
+                if (chaindl) {
+                    let chain = structuredClone(chaindl);
                     chain['name'] = remark;
-                    chain['dialer-proxy'] = `proxy-${proxyIndex}`;
+                    chain['dialer-dl'] = `dl-${dlIndex}`;
                     config.proxies.push(chain);
                 }
 
-                proxyIndex++;
+                dlIndex++;
                 protocolIndex++;
             });
         });
@@ -573,7 +573,7 @@ export async function getClashNormalConfig (request, env) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });
@@ -628,7 +628,7 @@ const clashConfigTemp = {
         }
     },
     "proxies": [],
-    "proxy-groups": [
+    "dl-groups": [
         {
             "name": "✅ Selector",
             "type": "select",

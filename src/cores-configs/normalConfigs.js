@@ -5,19 +5,19 @@ export async function getNormalConfigs(request, env) {
     const { blogSettings } = await getDataset(request, env);
     const { 
         cleanIPs, 
-        proxyIP, 
+        dlIP, 
         ports, 
         vlessConfigs, 
         trojanConfigs , 
-        outProxy, 
+        outdl, 
         customCdnAddrs, 
         customCdnHost, 
         customCdnSni, 
         enableIPv6
     } = blogSettings;
     
-    let vlessConfs = '', trojanConfs = '', chainProxy = '';
-    let proxyIndex = 1;
+    let vlessConfs = '', trojanConfs = '', chaindl = '';
+    let dlIndex = 1;
     const Addresses = await getConfigAddresses(cleanIPs, enableIPv6);
     const customCdnAddresses = customCdnAddrs ? customCdnAddrs.split(',') : [];
     const totalAddresses = [...Addresses, ...customCdnAddresses];
@@ -33,9 +33,9 @@ export async function getNormalConfigs(request, env) {
             const configType = isCustomAddr ? 'C' : '';
             const sni = isCustomAddr ? customCdnSni : randomUpperCase(globalThis.hostName);
             const host = isCustomAddr ? customCdnHost : globalThis.hostName;
-            const path = `${getRandomPath(16)}${proxyIP ? `/${encodeURIComponent(btoa(proxyIP))}` : ''}${earlyData}`;
-            const vlessRemark = encodeURIComponent(generateRemark(proxyIndex, port, addr, cleanIPs, 'VLESS', configType));
-            const trojanRemark = encodeURIComponent(generateRemark(proxyIndex, port, addr, cleanIPs, 'Trojan', configType));
+            const path = `${getRandomPath(16)}${dlIP ? `/${encodeURIComponent(btoa(dlIP))}` : ''}${earlyData}`;
+            const vlessRemark = encodeURIComponent(generateRemark(dlIndex, port, addr, cleanIPs, 'VLESS', configType));
+            const trojanRemark = encodeURIComponent(generateRemark(dlIndex, port, addr, cleanIPs, 'Trojan', configType));
             const tlsFields = globalThis.defaultHttpsPorts.includes(port) 
                 ? `&security=tls&sni=${sni}&fp=randomized&alpn=${alpn}`
                 : '&security=none';
@@ -48,30 +48,30 @@ export async function getNormalConfigs(request, env) {
                 trojanConfs += `${atob('dHJvamFuOi8v')}${trojanPass}@${addr}:${port}?path=/tr${path}&host=${host}&type=ws${tlsFields}#${trojanRemark}\n`;
             }
             
-            proxyIndex++;
+            dlIndex++;
         });
     });
 
-    if (outProxy) {
-        let chainRemark = `#${encodeURIComponent('💦 Chain proxy 🔗')}`;
-        if (outProxy.startsWith('socks') || outProxy.startsWith('http')) {
+    if (outdl) {
+        let chainRemark = `#${encodeURIComponent('💦 Chain dl 🔗')}`;
+        if (outdl.startsWith('socks') || outdl.startsWith('http')) {
             const regex = /^(?:socks|http):\/\/([^@]+)@/;
-            const isUserPass = outProxy.match(regex);
+            const isUserPass = outdl.match(regex);
             const userPass = isUserPass ? isUserPass[1] : false;
-            chainProxy = userPass 
-                ? outProxy.replace(userPass, btoa(userPass)) + chainRemark 
-                : outProxy + chainRemark;
+            chaindl = userPass 
+                ? outdl.replace(userPass, btoa(userPass)) + chainRemark 
+                : outdl + chainRemark;
         } else {
-            chainProxy = outProxy.split('#')[0] + chainRemark;
+            chaindl = outdl.split('#')[0] + chainRemark;
         }
     }
 
-    const configs = btoa(vlessConfs + trojanConfs + chainProxy);
+    const configs = btoa(vlessConfs + trojanConfs + chaindl);
     return new Response(configs, { 
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });

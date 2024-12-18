@@ -112,10 +112,10 @@ export async function renderSecretsPage () {
             <div class="form-container">
                 <h2>Secrets generator</h2>
                 <div>
-                    <strong>Random UUID</strong>
+                    <strong>Random uid</strong>
                     <div class="output-container">
-                        <span id="uuid" class="output"></span>
-                        <span class="copy-icon" onclick="copyToClipboard('uuid')">📋</span>
+                        <span id="uid" class="output"></span>
+                        <span class="copy-icon" onclick="copyToClipboard('uid')">📋</span>
                     </div>
                 </div>
                 <div>
@@ -130,8 +130,8 @@ export async function renderSecretsPage () {
         </div>
         <script>
             localStorage.getItem('darkMode') === 'enabled' && document.body.classList.add('dark-mode');
-            function generateUUID() {
-                return crypto.randomUUID();
+            function generateuid() {
+                return crypto.randomuid();
             }
     
             function generateStrongPassword() {
@@ -148,10 +148,10 @@ export async function renderSecretsPage () {
             }
     
             function generateCredentials() {
-                const uuid = generateUUID();
+                const uid = generateuid();
                 const password = generateStrongPassword();
     
-                document.getElementById('uuid').textContent = uuid;
+                document.getElementById('uid').textContent = uid;
                 document.getElementById('trojan-password').textContent = password;
             }
     

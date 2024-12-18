@@ -3,8 +3,8 @@ export async function renderHomePage (blogSettings, isPassSet) {
         remoteDNS, 
         localDNS,
         vlessTrojanFakeDNS, 
-        proxyIP, 
-        outProxy,
+        dlIP, 
+        outdl,
         cleanIPs, 
         enableIPv6,
         customCdnAddrs,
@@ -411,12 +411,12 @@ export async function renderHomePage (blogSettings, isPassSet) {
                         </div>
                     </div>
                     <div class="form-control">
-                        <label for="proxyIP">📍 Proxy IPs / Domains</label>
-                        <input type="text" id="proxyIP" name="proxyIP" value="${proxyIP.replaceAll(",", " , ")}">
+                        <label for="dlIP">📍 dl IPs / Domains</label>
+                        <input type="text" id="dlIP" name="dlIP" value="${dlIP.replaceAll(",", " , ")}">
                     </div>
                     <div class="form-control">
-                        <label for="outProxy">✈️ Chain Proxy</label>
-                        <input type="text" id="outProxy" name="outProxy" value="${outProxy}">
+                        <label for="outdl">✈️ Chain dl</label>
+                        <input type="text" id="outdl" name="outdl" value="${outdl}">
                     </div>
                     <div class="form-control">
                         <label for="cleanIPs">✨ Clean IPs / Domains</label>
@@ -1187,21 +1187,21 @@ export async function renderHomePage (blogSettings, isPassSet) {
             const noiseDelayMin = getValue('noiseDelayMin');
             const noiseDelayMax = getValue('noiseDelayMax');
             const cleanIPs = document.getElementById('cleanIPs').value?.split(',');
-            const proxyIPs = document.getElementById('proxyIP').value?.split(',');
-            const chainProxy = document.getElementById('outProxy').value?.trim();
+            const dlIPs = document.getElementById('dlIP').value?.split(',');
+            const chaindl = document.getElementById('outdl').value?.trim();
             const customBypassRules = document.getElementById('customBypassRules').value?.split(',');                    
             const customBlockRules = document.getElementById('customBlockRules').value?.split(',');                    
             const formData = new FormData(configForm);
-            const isVless = /vless:\\/\\/[^\s@]+@[^\\s:]+:[^\\s]+/.test(chainProxy);
-            const isSocksHttp = /^(http|socks):\\/\\/(?:([^:@]+):([^:@]+)@)?([^:@]+):(\\d+)$/.test(chainProxy);
-            const hasSecurity = /security=/.test(chainProxy);
+            const isVless = /vless:\\/\\/[^\s@]+@[^\\s:]+:[^\\s]+/.test(chaindl);
+            const isSocksHttp = /^(http|socks):\\/\\/(?:([^:@]+):([^:@]+)@)?([^:@]+):(\\d+)$/.test(chaindl);
+            const hasSecurity = /security=/.test(chaindl);
             const securityRegex = /security=(tls|none|reality)/;
-            const validSecurityType = securityRegex.test(chainProxy);
-            let match = chainProxy.match(securityRegex);
+            const validSecurityType = securityRegex.test(chaindl);
+            let match = chaindl.match(securityRegex);
             const securityType = match ? match[1] : null;
-            match = chainProxy.match(/:(\\d+)\\?/);
+            match = chaindl.match(/:(\\d+)\\?/);
             const vlessPort = match ? match[1] : null;
-            const validTransmission = /type=(tcp|grpc|ws)/.test(chainProxy);
+            const validTransmission = /type=(tcp|grpc|ws)/.test(chaindl);
             const validIPDomain = /^((?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,})|(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)(?:\\/(?:\\d|[12]\\d|3[0-2]))?|\\[(?:(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,7}:|(?:[a-fA-F0-9]{1,4}:){1,6}:[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,5}(?::[a-fA-F0-9]{1,4}){1,2}|(?:[a-fA-F0-9]{1,4}:){1,4}(?::[a-fA-F0-9]{1,4}){1,3}|(?:[a-fA-F0-9]{1,4}:){1,3}(?::[a-fA-F0-9]{1,4}){1,4}|(?:[a-fA-F0-9]{1,4}:){1,2}(?::[a-fA-F0-9]{1,4}){1,5}|[a-fA-F0-9]{1,4}:(?::[a-fA-F0-9]{1,4}){1,6}|:(?::[a-fA-F0-9]{1,4}){1,7})\\](?:\\/(?:12[0-8]|1[0-1]\\d|[0-9]?\\d))?)$/i;
             const validEndpoint = /^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|\\[(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,7}:\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,6}:[a-fA-F0-9]{1,4}\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,5}(?::[a-fA-F0-9]{1,4}){1,2}\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,4}(?::[a-fA-F0-9]{1,4}){1,3}\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,3}(?::[a-fA-F0-9]{1,4}){1,4}\\]|\\[(?:[a-fA-F0-9]{1,4}:){1,2}(?::[a-fA-F0-9]{1,4}){1,5}\\]|\\[[a-fA-F0-9]{1,4}:(?::[a-fA-F0-9]{1,4}){1,6}\\]|\\[:(?::[a-fA-F0-9]{1,4}){1,7}\\]|\\[::(?::[a-fA-F0-9]{1,4}){0,7}\\]):(?:[0-9]{1,5})$/;
             const checkedPorts = Array.from(document.querySelectorAll('input[id^="port-"]:checked')).map(input => input.id.split('-')[1]);
@@ -1210,7 +1210,7 @@ export async function renderHomePage (blogSettings, isPassSet) {
                 !formData.has(checkbox.name) && formData.append(checkbox.name, 'false');    
             });
 
-            const invalidIPs = [...cleanIPs, ...proxyIPs, ...customCdnAddrs, ...customBypassRules, ...customBlockRules, customCdnHost, customCdnSni]?.filter(value => {
+            const invalidIPs = [...cleanIPs, ...dlIPs, ...customCdnAddrs, ...customBypassRules, ...customBlockRules, customCdnHost, customCdnSni]?.filter(value => {
                 if (value) {
                     const trimmedValue = value.trim();
                     return !validIPDomain.test(trimmedValue);
@@ -1239,13 +1239,13 @@ export async function renderHomePage (blogSettings, isPassSet) {
                 return false;
             }
 
-            if (!(isVless && (hasSecurity && validSecurityType || !hasSecurity) && validTransmission) && !isSocksHttp && chainProxy) {
-                alert('⛔ Invalid Config! 🫤 \\n - The chain proxy should be VLESS, Socks or Http!\\n - VLESS transmission should be GRPC,WS or TCP\\n - VLESS security should be TLS,Reality or None\\n - socks or http should be like:\\n + (socks or http)://user:pass@host:port\\n + (socks or http)://host:port');               
+            if (!(isVless && (hasSecurity && validSecurityType || !hasSecurity) && validTransmission) && !isSocksHttp && chaindl) {
+                alert('⛔ Invalid Config! 🫤 \\n - The chain dl should be VLESS, Socks or Http!\\n - VLESS transmission should be GRPC,WS or TCP\\n - VLESS security should be TLS,Reality or None\\n - socks or http should be like:\\n + (socks or http)://user:pass@host:port\\n + (socks or http)://host:port');               
                 return false;
             }
 
             if (isVless && securityType === 'tls' && vlessPort !== '443') {
-                alert('⛔ VLESS TLS port can be only 443 to be used as a proxy chain! 🫤');               
+                alert('⛔ VLESS TLS port can be only 443 to be used as a dl chain! 🫤');               
                 return false;
             }
 
@@ -1369,7 +1369,7 @@ export async function renderHomePage (blogSettings, isPassSet) {
             'X-Content-Type-Options': 'nosniff',
             'X-Frame-Options': 'DENY',
             'Referrer-Policy': 'strict-origin-when-cross-origin',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, no-transform',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate, no-transform',
             'CDN-Cache-Control': 'no-store'
         }
     });

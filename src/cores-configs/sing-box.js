@@ -350,8 +350,8 @@ function buildSingBoxRoutingRules (blogSettings) {
 }
 
 function buildSingBoxVLESSOutbound (blogSettings, remark, address, port, host, sni, allowInsecure, isFragment) {
-    const { enableIPv6, lengthMin, lengthMax, intervalMin, intervalMax, proxyIP } = blogSettings;
-    const path = `/${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}`;
+    const { enableIPv6, lengthMin, lengthMax, intervalMin, intervalMax, dlIP } = blogSettings;
+    const path = `/${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}`;
     const tls = globalThis.defaultHttpsPorts.includes(port) ? true : false;
     const outbound =  {
         type: "vless",
@@ -392,8 +392,8 @@ function buildSingBoxVLESSOutbound (blogSettings, remark, address, port, host, s
 }
 
 function buildSingBoxTrojanOutbound (blogSettings, remark, address, port, host, sni, allowInsecure, isFragment) {
-    const { enableIPv6, lengthMin, lengthMax, intervalMin, intervalMax, proxyIP } = blogSettings;
-    const path = `/tr${getRandomPath(16)}${proxyIP ? `/${btoa(proxyIP)}` : ''}`;
+    const { enableIPv6, lengthMin, lengthMax, intervalMin, intervalMax, dlIP } = blogSettings;
+    const path = `/tr${getRandomPath(16)}${dlIP ? `/${btoa(dlIP)}` : ''}`;
     const tls = globalThis.defaultHttpsPorts.includes(port) ? true : false;
     const outbound = {
         type: "trojan",
@@ -483,9 +483,9 @@ function buildSingBoxWarpOutbound (blogSettings, webConfigs, remark, endpoint, c
     return outbound;
 }
 
-function buildSingBoxChainOutbound (chainProxyParams, enableIPv6) {
-    if (["socks", "http"].includes(chainProxyParams.protocol)) {
-        const { protocol, server, port, user, pass } = chainProxyParams;
+function buildSingBoxChainOutbound (chaindlParams, enableIPv6) {
+    if (["socks", "http"].includes(chaindlParams.protocol)) {
+        const { protocol, server, port, user, pass } = chaindlParams;
     
         const chainOutbound = {
             type: protocol,
@@ -501,14 +501,14 @@ function buildSingBoxChainOutbound (chainProxyParams, enableIPv6) {
         return chainOutbound;
     }
 
-    const { server, port, uuid, flow, security, type, sni, fp, alpn, pbk, sid, headerType, host, path, serviceName } = chainProxyParams;
+    const { server, port, uid, flow, security, type, sni, fp, alpn, pbk, sid, headerType, host, path, serviceName } = chaindlParams;
     const chainOutbound = {
         type: "vless",
         tag: "",
         server: server,
         server_port: +port,
         domain_strategy: enableIPv6 ? "prefer_ipv4" : "ipv4_only",
-        uuid: uuid,
+        uuid: uid,
         flow: flow,
         detour: ""
     };
@@ -611,7 +611,7 @@ export async function getSingBoxWarpConfig (request, env, client) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });
@@ -619,14 +619,14 @@ export async function getSingBoxWarpConfig (request, env, client) {
 
 export async function getSingBoxCustomConfig(request, env, isFragment) {
     const { blogSettings } = await getDataset(request, env);
-    let chainProxy;
+    let chaindl;
     const { 
         cleanIPs,  
         ports, 
         vlessConfigs, 
         trojanConfigs, 
-        outProxy, 
-        outProxyParams,
+        outdl, 
+        outdlParams,
         customCdnAddrs,
         customCdnHost,
         customCdnSni,
@@ -634,17 +634,17 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
         enableIPv6
     } = blogSettings;
  
-    if (outProxy) {
-        const proxyParams = JSON.parse(outProxyParams);      
+    if (outdl) {
+        const dlParams = JSON.parse(outdlParams);      
         try {
-            chainProxy = buildSingBoxChainOutbound(proxyParams, enableIPv6);
+            chaindl = buildSingBoxChainOutbound(dlParams, enableIPv6);
         } catch (error) {
-            console.log('An error occured while parsing chain proxy: ', error);
-            chainProxy = undefined;
+            console.log('An error occured while parsing chain dl: ', error);
+            chaindl = undefined;
             await env.blog.put("blogSettings", JSON.stringify({
                 ...blogSettings, 
-                outProxy: '',
-                outProxyParams: {}
+                outdl: '',
+                outdlParams: {}
             }));
         }
     }
@@ -653,7 +653,7 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
     const customCdnAddresses = customCdnAddrs ? customCdnAddrs.split(',') : [];
     const totalAddresses = [...Addresses, ...customCdnAddresses];
     const config = structuredClone(singboxConfigTemp);
-    const dnsObject = buildSingBoxDNS(blogSettings, totalAddresses, false, chainProxy ? 'proxy-1' : '✅ Selector');
+    const dnsObject = buildSingBoxDNS(blogSettings, totalAddresses, false, chaindl ? 'dl-1' : '✅ Selector');
     const {rules, rule_set} = buildSingBoxRoutingRules(blogSettings);
     config.dns.servers = dnsObject.servers;
     config.dns.rules = dnsObject.rules;
@@ -666,7 +666,7 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
     urlTest.interval = `${bestVLESSTrojanInterval}s`;
     urlTest.tag = '💦 Best Ping 💥';
     const totalPorts = ports.filter(port => isFragment ? globalThis.defaultHttpsPorts.includes(port) : true);
-    let proxyIndex = 1;
+    let dlIndex = 1;
     const protocols = [
         ...(vlessConfigs ? ['VLESS'] : []),
         ...(trojanConfigs ? ['Trojan'] : [])
@@ -686,7 +686,7 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
                 if (protocol === 'VLESS') {
                     VLESSOutbound = buildSingBoxVLESSOutbound (
                         blogSettings,
-                        chainProxy ? `proxy-${proxyIndex}` : remark, 
+                        chaindl ? `dl-${dlIndex}` : remark, 
                         addr, 
                         port, 
                         host,
@@ -700,7 +700,7 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
                 if (protocol === 'Trojan') {
                     TrojanOutbound = buildSingBoxTrojanOutbound (
                         blogSettings,
-                        chainProxy ? `proxy-${proxyIndex}` : remark, 
+                        chaindl ? `dl-${dlIndex}` : remark, 
                         addr, 
                         port, 
                         host,
@@ -711,16 +711,16 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
                     config.outbounds.push(TrojanOutbound);
                 }
                 
-                if (chainProxy) {
-                    const chain = structuredClone(chainProxy);
+                if (chaindl) {
+                    const chain = structuredClone(chaindl);
                     chain.tag = remark;
-                    chain.detour = `proxy-${proxyIndex}`;
+                    chain.detour = `dl-${dlIndex}`;
                     config.outbounds.push(chain);
                 }
                 
                 selector.outbounds.push(remark);
                 urlTest.outbounds.push(remark);
-                proxyIndex++;
+                dlIndex++;
                 protocolIndex++;
             });
         });
@@ -730,7 +730,7 @@ export async function getSingBoxCustomConfig(request, env, isFragment) {
         status: 200,
         headers: {
             'Content-Type': 'text/plain;charset=utf-8',
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, dl-revalidate',
             'CDN-Cache-Control': 'no-store'
         }
     });

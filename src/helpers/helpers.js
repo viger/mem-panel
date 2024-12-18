@@ -2,9 +2,9 @@ import { Authenticate } from "../authentication/auth";
 import { getDataset, updateDataset } from "../kv/handlers";
 import { renderHomePage } from "../pages/home";
 
-export function isValidUUID(uuid) {
-	const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-	return uuidRegex.test(uuid);
+export function isValiduid(uid) {
+	const uidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+	return uidRegex.test(uid);
 }
 
 export async function resolveDNS (domain) {

@@ -72,9 +72,9 @@ export async function updateDataset (request, env) {
         resolvedRemoteDNS: resolvedRemoteDNS,
         localDNS: validateField('localDNS') ?? currentSettings?.localDNS ?? '8.8.8.8',
         vlessTrojanFakeDNS: validateField('vlessTrojanFakeDNS') ?? currentSettings?.vlessTrojanFakeDNS ?? false,
-        proxyIP: validateField('proxyIP')?.replaceAll(' ', '') ?? currentSettings?.proxyIP ?? '',
-        outProxy: validateField('outProxy') ?? currentSettings?.outProxy ?? '',
-        outProxyParams: extractChainProxyParams(validateField('outProxy')) ?? currentSettings?.outProxyParams ?? {},
+        dlIP: validateField('dlIP')?.replaceAll(' ', '') ?? currentSettings?.dlIP ?? '',
+        outdl: validateField('outdl') ?? currentSettings?.outdl ?? '',
+        outdlParams: extractChaindlParams(validateField('outdl')) ?? currentSettings?.outdlParams ?? {},
         cleanIPs: validateField('cleanIPs')?.replaceAll(' ', '') ?? currentSettings?.cleanIPs ?? '',
         enableIPv6: enableIPv6,
         customCdnAddrs: validateField('customCdnAddrs')?.replaceAll(' ', '') ?? currentSettings?.customCdnAddrs ?? '',
@@ -124,16 +124,16 @@ export async function updateDataset (request, env) {
     return blogSettings;
 }
 
-function extractChainProxyParams(chainProxy) {
+function extractChaindlParams(chaindl) {
     let configParams = {};
-    if (!chainProxy) return {};
-    const url = new URL(chainProxy);
+    if (!chaindl) return {};
+    const url = new URL(chaindl);
     const protocol = url.protocol.slice(0, -1);
     if (protocol === 'vless') {
         const params = new URLSearchParams(url.search);
         configParams = {
             protocol: protocol,
-            uuid : url.username,
+            uid : url.username,
             server : url.hostname,
             port : url.port
         };
