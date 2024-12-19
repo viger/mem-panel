@@ -6,7 +6,7 @@ rules = [
   { type = "ESModule", globs = ["**/*.js"], fallthrough = true }
 ]
 kv_namespaces = [
-  { binding = "BLOG_KV_DATA", id = "blog" }
+  { binding = "blog", id = "BLOG_KV_DATA" }
 ]
 
 [placement]
