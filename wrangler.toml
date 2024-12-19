@@ -8,7 +8,7 @@ rules = [
 
 [[kv_namespaces]]
 binding = "blog"
-id = "BLOG_KV_DATA"
+id = "08e73cb0571e4c55940ac75bc2a38eb8"
 
 [placement]
 mode = "smart"
