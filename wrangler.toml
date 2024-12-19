@@ -5,6 +5,9 @@ workers_dev = false
 rules = [
   { type = "ESModule", globs = ["**/*.js"], fallthrough = true }
 ]
+kv_namespaces = [
+  { binding = "BLOG_KV_DATA", id = "blog" }
+]
 
 [placement]
 mode = "smart"
