@@ -10,9 +10,5 @@ rules = [
 binding = "blog"
 id = "08e73cb0571e4c55940ac75bc2a38eb8"
 
-routes = [
-  { pattern = "cmm.newpp.us.kg", custom_domain = true }
-]
-
 [placement]
 mode = "smart"
