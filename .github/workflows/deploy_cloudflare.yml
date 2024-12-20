@@ -21,4 +21,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           # accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: 'deploy --keep-vars --var uid=${{ secrets.CF_UUID }} --var BLOG_PWD=${{ secrets.CF_TROJANT_PWD }}'
+          command: 'deploy --keep-vars --var uid:${{ secrets.CF_UUID }} --var BLOG_PWD:${{ secrets.CF_TROJANT_PWD }}'
