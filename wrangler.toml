@@ -1,4 +1,4 @@
-name = "mem-cnm-wk"
+name = "mem-cmm-wk"
 main = "worker.js"
 compatibility_date = "2024-12-18"
 workers_dev = false
@@ -9,6 +9,10 @@ rules = [
 [[kv_namespaces]]
 binding = "blog"
 id = "08e73cb0571e4c55940ac75bc2a38eb8"
+
+routes = [
+  { pattern = "cmm.newpp.us.kg", custom_domain = true }
+]
 
 [placement]
 mode = "smart"
