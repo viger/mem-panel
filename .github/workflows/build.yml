@@ -3,7 +3,7 @@ name: Build and Deploy Worker
 on:
   push:
     branches:
-      - dev
+      - tag_275
   schedule:
     - cron: '1 0,6,12 * * *'
 
@@ -31,21 +31,21 @@ jobs:
       - name: Build project
         run: |
           npx wrangler deploy src/worker.js --name blog-worker-panel --compatibility-flag [nodejs_compat] --compatibility-date 2024-10-26 --dry-run --outdir=dist
-          npx javascript-obfuscator --split-strings true --split-strings-chunk-length 2 dist/worker.js --output _worker.js
+          npx javascript-obfuscator --split-strings true --split-strings-chunk-length 2 dist/worker.js --output _worker275.js
 
       - name: Commit and push built worker
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git pull
-          git add _worker.js
-          git commit -m "Automated build: update _worker.js to dev"
+          git add _worker275.js
+          git commit -m "Automated build: update _worker275.js to tag_275"
           git push
           git checkout -b main origin/main
           git checkout main
-          git checkout dev _worker.js
+          git checkout tag_275 _worker275.js
           git checkout main
-          git commit -m "Automated build: update _worker.js to main"
+          git commit -m "Automated build: update _worker275.js to main"
           git push 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
