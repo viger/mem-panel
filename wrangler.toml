@@ -6,7 +6,9 @@ rules = [
   { type = "ESModule", globs = ["**/*.js"], fallthrough = true }
 ]
 
-route = "cmm-wk.newpp.us.kg/*"
+routes = [
+  { pattern = "cnm-wk-new.newpp.us.kg", custom_domain = true }
+]
 
 [[kv_namespaces]]
 binding = "blog"
