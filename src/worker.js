@@ -210,7 +210,7 @@ export default {
                         }
 
                         const loginAuth = await Authenticate(request, env);
-                        if (loginAuth) return Response.redirect(`${url.origin}/panel`, 302);
+                        if (loginAuth) return Response.redirect(`${url.origin}/dash`, 302);
                         let secretKey = await env.blog.get('secretKey');
                         if (!secretKey) {
                             secretKey = generateSecretKey();
@@ -259,7 +259,7 @@ export default {
                             }
                         });        
 
-                    case '/panel/password':
+                    case '/dash/password':
                         const oldPwd = await env.blog.get('pwd');
                         let passAuth = await Authenticate(request, env);
                         if (oldPwd && !passAuth) return new Response('Unauthorized!', { status: 401 });           
@@ -276,7 +276,7 @@ export default {
 
                     default:
                         // return new Response('Not found', { status: 404 });
-                        url.hostname = 'www.speedtest.net';
+                        url.hostname = 'tech.meituan.com';
                         url.protocol = 'https:';
                         request = new Request(url, request);
                         return await fetch(request);
@@ -2470,7 +2470,7 @@ function renderHomePage (proxySettings, hostName, isPassSet) {
                     const refreshButtonVal = refreshBtn.innerHTML;
                     refreshBtn.innerHTML = '⌛ Loading...';
 
-                    const response = await fetch('/panel', {
+                    const response = await fetch('/dash', {
                         method: 'POST',
                         body: formData,
                         credentials: 'include'
@@ -2714,7 +2714,7 @@ function renderHomePage (proxySettings, hostName, isPassSet) {
                 const applyButtonVal = applyButton.value;
                 applyButton.value = '⌛ Loading...';
 
-                const response = await fetch('/panel', {
+                const response = await fetch('/dash', {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
@@ -2780,7 +2780,7 @@ function renderHomePage (proxySettings, hostName, isPassSet) {
             }
                     
             try {
-                const response = await fetch('/panel/password', {
+                const response = await fetch('/dash/password', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'text/plain'
@@ -2949,7 +2949,7 @@ function renderLoginPage () {
                 });
             
                 if (response.ok) {
-                    window.location.href = '/panel';
+                    window.location.href = '/dash';
                 } else {
                     passwordError.textContent = '⚠️ Wrong Password!';
                     const errorMessage = await response.text();
