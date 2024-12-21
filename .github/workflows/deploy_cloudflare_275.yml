@@ -20,7 +20,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: 'delete --name mem-cmm-wk-old'
+          command: 'delete --name mem-cmm-wk-old --dry-run'
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
