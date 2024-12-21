@@ -7,7 +7,7 @@ rules = [
 ]
 
 routes = [
-  { pattern = "cnm-wk-new.newpp.us.kg", custom_domain = true }
+  { pattern = "cnm-wk.newpp.us.kg", custom_domain = true }
 ]
 
 [[kv_namespaces]]
