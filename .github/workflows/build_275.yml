@@ -1,0 +1,49 @@
+name: Build and Deploy Worker
+
+on:
+  schedule:
+    - cron: '1 */12 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: tag_275
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: |
+          npx wrangler deploy src/worker.js --name blog-worker-panel --compatibility-flag [nodejs_compat] --compatibility-date 2024-10-26 --dry-run --outdir=dist
+          npx javascript-obfuscator --split-strings true --split-strings-chunk-length 2 dist/worker.js --output _worker275.js
+
+      - name: Commit and push built worker
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull
+          git add _worker275.js
+          git commit -m "Automated build: update _worker275.js to tag_275"
+          git push
+          git checkout -b main origin/main
+          git checkout main
+          git checkout tag_275 _worker275.js
+          git checkout main
+          git commit -m "Automated build: update _worker275.js to main"
+          git push 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

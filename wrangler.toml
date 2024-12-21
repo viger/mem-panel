@@ -10,9 +10,26 @@ routes = [
   { pattern = "cnm-wk.newpp.us.kg", custom_domain = true }
 ]
 
-[[kv_namespaces]]
-binding = "blog"
-id = "08e73cb0571e4c55940ac75bc2a38eb8"
+kv_namespaces = [
+  { binding = "blog", id = "08e73cb0571e4c55940ac75bc2a38eb8" }
+]
 
 [placement]
 mode = "smart"
+
+[env.tag_275]
+name = "mem-cmm-wk-old"
+main = "worker.js"
+compatibility_date = "2024-12-21"
+workers_dev = false
+rules = [
+  { type = "ESModule", globs = ["**/*.js"], fallthrough = true }
+]
+
+routes = [
+  { pattern = "cnm-wk-old.newpp.us.kg", custom_domain = true }
+]
+
+kv_namespaces = [
+  { binding = "blog", id = "08e73cb0571e4c55940ac75bc2a38eb8" }
+]
