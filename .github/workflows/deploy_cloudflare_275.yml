@@ -26,4 +26,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           # accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: 'deploy --keep-vars --var uid:${{ secrets.CF_UUID }} BLOG_PWD:${{ secrets.CF_TROJANT_PWD }} --env tag_275 --name mem-cmm-wk-old'
+          command: 'deploy --keep-vars --var uid:${{ secrets.CF_UUID }} BLOG_PWD:${{ secrets.CF_TROJANT_PWD }} --env tag_275'
