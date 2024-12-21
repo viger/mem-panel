@@ -16,9 +16,14 @@ jobs:
       - name: Rename Workerjs
         run: |
           mv _worker275.js worker.js
+      - name: Delete Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          command: 'delete --name mem-cmm-wk-old'
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           # accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: 'deploy --keep-vars --var uid:${{ secrets.CF_UUID }} BLOG_PWD:${{ secrets.CF_TROJANT_PWD }} --env tag_275'
+          command: 'deploy --keep-vars --var uid:${{ secrets.CF_UUID }} BLOG_PWD:${{ secrets.CF_TROJANT_PWD }} --env tag_275 --name mem-cmm-wk-old'
